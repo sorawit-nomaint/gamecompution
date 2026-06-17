@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computational Thinking Quest - ม.4</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Mitr & Prompt) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Prompt', 'Mitr', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+        .pixel-corners {
+            border-radius: 12px;
+        }
+        /* Custom animations for battle */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px) rotate(-1deg); }
+            75% { transform: translateX(10px) rotate(1deg); }
+        }
+        @keyframes attack-left {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(50px) scale(1.1); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes attack-right {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(-50px) scale(1.1); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        .animate-attack-l {
+            animation: attack-left 0.5s ease-in-out;
+        }
+        .animate-attack-r {
+            animation: attack-right 0.5s ease-in-out;
+        }
+        .animate-monster {
+            animation: bounce-slow 3s infinite ease-in-out;
+        }
+        .glow-active {
+            animation: pulse-glow 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 min-h-screen flex flex-col justify-between">
+
+    <!-- Sound Controller Header -->
+    <header class="p-4 flex justify-between items-center bg-slate-900/80 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">⚡</span>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">Computational Quest</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="soundBtn" onclick="toggleMute()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors">
+                <i id="soundIcon" class="fas fa-volume-up"></i>
+            </button>
+            <button id="homeBtn" onclick="returnToMainMenu()" class="hidden p-2 bg-rose-950/50 hover:bg-rose-900 border border-rose-500/30 rounded-lg text-rose-300 transition-colors text-sm">
+                <i class="fas fa-home mr-1"></i> เมนูหลัก
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        
+        <!-- 1. SCREEN: LOBBY & HERO SELECTION -->
+        <div id="screen-lobby" class="w-full max-w-4xl bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-8">
+            <div class="text-center space-y-3">
+                <span class="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 rounded-full text-xs font-semibold tracking-wider uppercase border border-indigo-500/20">ม.4 เทิร์นเบส RPG</span>
+                <h2 class="text-4xl font-extrabold text-white tracking-tight">พิชิตดินแดน <span class="text-indigo-400">แนวคิดเชิงคำนวณ</span></h2>
+                <p class="text-slate-400 max-w-md mx-auto text-sm">เดินทางเผชิญหน้ากับปีศาจแห่งความไม่รู้ และแก้โจทย์ปัญหาคอมพิวเตอร์เพื่อปกป้องอาณาจักร!</p>
+            </div>
+
+            <!-- Name Input -->
+            <div class="max-w-md mx-auto space-y-2">
+                <label class="block text-sm font-semibold text-slate-300"><i class="fas fa-user-tag text-indigo-400 mr-1"></i> ชื่อผู้กล้าของคุณ</label>
+                <input type="text" id="player-name-input" value="ผู้กล้าฝึกหัด" placeholder="กรอกชื่อของคุณ..." 
+                    class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white placeholder-slate-500 transition-all">
+            </div>
+
+            <!-- Hero Selection -->
+            <div class="space-y-4">
+                <h3 class="text-center font-bold text-lg text-slate-200"><i class="fas fa-shield-halved text-indigo-400 mr-2"></i>เลือกตัวละครผู้กล้า</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Hero 1 -->
+                    <div id="hero-card-warrior" onclick="selectHero('warrior')" 
+                        class="hero-card border-2 border-slate-800 bg-slate-950 p-5 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-950/10 transition-all relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity text-8xl text-indigo-400">🛡️</div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-4xl">🛡️</span>
+                            <div>
+                                <h4 class="font-bold text-white text-lg">เดชา (นักรบ)</h4>
+                                <span class="text-xs text-indigo-400">สายถึกทนทาน</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 min-h-[40px]">มีพลังป้องกันสูงมาก ป้องกันสถานะผิดปกติได้ดี เหมาะสำหรับผู้เล่นที่เน้นความปลอดภัย</p>
+                        <div class="mt-4 pt-3 border-t border-slate-800 space-y-1.5 text-xs text-slate-400">
+                            <div class="flex justify-between"><span>พลังชีวิต (HP):</span> <span class="text-emerald-400 font-bold">120</span></div>
+                            <div class="flex justify-between"><span>พลังโจมตี (ATK):</span> <span class="text-rose-400 font-bold">15</span></div>
+                            <div class="flex justify-between"><span>พลังป้องกัน (DEF):</span> <span class="text-amber-400 font-bold">8</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Hero 2 -->
+                    <div id="hero-card-mage" onclick="selectHero('mage')" 
+                        class="hero-card border-2 border-slate-800 bg-slate-950 p-5 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-950/10 transition-all relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity text-8xl text-indigo-400">🔮</div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-4xl">🔮</span>
+                            <div>
+                                <h4 class="font-bold text-white text-lg">กานดา (นักเวทย์)</h4>
+                                <span class="text-xs text-indigo-400">เน้นโจมตีรุนแรง</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 min-h-[40px]">พลังโจมตีสูงมาก สามารถล้มศัตรูได้อย่างรวดเร็ว แต่ตัวบางและได้รับสถานะผิดปกติได้ง่าย</p>
+                        <div class="mt-4 pt-3 border-t border-slate-800 space-y-1.5 text-xs text-slate-400">
+                            <div class="flex justify-between"><span>พลังชีวิต (HP):</span> <span class="text-emerald-400 font-bold">80</span></div>
+                            <div class="flex justify-between"><span>พลังโจมตี (ATK):</span> <span class="text-rose-400 font-bold">25</span></div>
+                            <div class="flex justify-between"><span>พลังป้องกัน (DEF):</span> <span class="text-amber-400 font-bold">3</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Hero 3 -->
+                    <div id="hero-card-archer" onclick="selectHero('archer')" 
+                        class="hero-card border-2 border-slate-800 bg-slate-950 p-5 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-950/10 transition-all relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity text-8xl text-indigo-400">🏹</div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-4xl">🏹</span>
+                            <div>
+                                <h4 class="font-bold text-white text-lg">ชาลี (นักธนู)</h4>
+                                <span class="text-xs text-indigo-400">สมดุลและรวดเร็ว</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 min-h-[40px]">มีความสมดุลทั้งรับและรุก มีทักษะหลบหลีกที่ดี ช่วยผ่อนแรงโจมตีจากสถานะผิดปกติ</p>
+                        <div class="mt-4 pt-3 border-t border-slate-800 space-y-1.5 text-xs text-slate-400">
+                            <div class="flex justify-between"><span>พลังชีวิต (HP):</span> <span class="text-emerald-400 font-bold">100</span></div>
+                            <div class="flex justify-between"><span>พลังโจมตี (ATK):</span> <span class="text-rose-400 font-bold">18</span></div>
+                            <div class="flex justify-between"><span>พลังป้องกัน (DEF):</span> <span class="text-amber-400 font-bold">5</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Zone -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                <button onclick="toggleHowToPlay(true)" class="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-book-open"></i> วิธีการเล่น
+                </button>
+                <button onclick="startGame()" class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-indigo-500/20 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-gamepad"></i> เริ่มผจญภัย
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. SCREEN: HOW TO PLAY MODAL -->
+        <div id="modal-howto" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div class="bg-slate-900 border border-slate-800 max-w-lg w-full rounded-2xl p-6 space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h3 class="text-xl font-bold text-indigo-400"><i class="fas fa-book-open mr-2"></i>คัมภีร์อภิปรายกติกา</h3>
+                    <button onclick="toggleHowToPlay(false)" class="text-slate-400 hover:text-white text-lg"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="space-y-4 text-sm text-slate-300 max-h-[60vh] overflow-y-auto pr-2">
+                    <div class="p-3 bg-slate-950 rounded-lg border-l-4 border-indigo-500">
+                        <strong class="text-white">🎯 เป้าหมาย:</strong> ตอบคำถามแนวคิดเชิงคำนวณ ม.4 ทั้งหมด 4 ด่านหลักเพื่อปราบมอนสเตอร์และผ่านด่าน
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-white text-base">⚔️ ระบบการต่อสู้แบบสลับเทิร์น (Turn-Based)</h4>
+                        <ul class="list-disc list-inside pl-2 space-y-1 text-slate-400">
+                            <li><strong class="text-emerald-400">เทิร์นผู้เล่น:</strong> คุณจะมีคำถามแสดงขึ้นมา หากตอบได้ถูกต้องภายในเวลา จะสามารถโจมตีทำดาเมจแก่มอนสเตอร์ได้ หากตอบผิดจะพลาดการโจมตี!</li>
+                            <li><strong class="text-rose-400">เทิร์นมอนสเตอร์:</strong> มอนสเตอร์จะตั้งท่าเตรียมโจมตีคุณ คุณต้องตอบคำถามเพื่อ "หลบหลีก" หากตอบถูกจะปลอดภัย หากตอบผิดจะโดนโจมตีลดพลังชีวิต และมีโอกาสติด <strong class="text-indigo-400">สถานะผิดปกติ</strong> ดังนี้:
+                                <ul class="list-circle pl-6 mt-1 space-y-1">
+                                    <li>⚡ <span class="text-amber-400">มึนงง (Stun)</span>: ในเทิร์นถัดไป คุณจะถูกข้ามและไม่สามารถทำดาเมจได้</li>
+                                    <li>🧪 <span class="text-emerald-400">ติดพิษ (Poison)</span>: จะลด HP ของคุณเมื่อจบเทิร์นเป็นเวลา 2 เทิร์น</li>
+                                    <li>❄️ <span class="text-sky-400">แช่แข็ง (Freeze)</span>: เพิ่มดาเมจที่ได้รับจากมอนสเตอร์เป็น 2 เท่าในรอบถัดไป</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="p-3 bg-slate-950 rounded-lg border-l-4 border-yellow-500">
+                        <strong class="text-yellow-400">🎁 เทิร์นคำถามพิเศษ (Bonus Game):</strong>
+                        ในบางช่วงการเปลี่ยนผ่าน มอนสเตอร์อาจหลบไป และมีคำถามพิเศษโผล่ขึ้นมา หากคุณตอบได้สำเร็จ คุณจะเลือกรับบัฟเพิ่มความสามารถถาวรได้แก่ เพิ่ม HP สูงสุด, เพิ่มพลังโจมตี (ATK), หรือ เพิ่มพลังป้องกัน (DEF)
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button onclick="toggleHowToPlay(false)" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors">เข้าใจแล้ว! เริ่มเดินทาง</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. SCREEN: GAME PLAY (BATTLE BOARD) -->
+        <div id="screen-game" class="hidden w-full max-w-5xl flex flex-col gap-6">
+            
+            <!-- Stage Bar & Player Header -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Info Grid 1: Stage Progress -->
+                <div class="md:col-span-1 bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col justify-center items-center text-center">
+                    <span id="stage-number" class="text-indigo-400 text-xs font-bold uppercase tracking-wider">STAGE 1 / 4</span>
+                    <h3 id="stage-name" class="text-lg font-bold text-white mt-1">การย่อยปัญหา (Decomposition)</h3>
+                    <div class="w-full bg-slate-950 h-2 rounded-full mt-3 overflow-hidden">
+                        <div id="stage-progress-bar" class="bg-indigo-500 h-full transition-all duration-500" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <!-- Info Grid 2: Combat Stats / Actions -->
+                <div class="md:col-span-3 bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4">
+                    <!-- Player HUD -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-950 border border-indigo-500/50 flex items-center justify-center text-2xl" id="hud-avatar">🛡️</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span id="hud-player-name" class="font-bold text-white">ผู้กล้าเดชา</span>
+                                <span id="hud-player-class" class="text-xs bg-slate-800 px-2 py-0.5 rounded text-indigo-400">นักรบ</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-32 bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
+                                    <div id="player-hp-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 100%"></div>
+                                </div>
+                                <span id="player-hp-text" class="text-xs text-slate-300 font-mono font-bold">120/120</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Player Stats & States -->
+                    <div class="flex flex-wrap items-center gap-3 text-xs">
+                        <span class="bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 flex items-center gap-1.5 text-rose-300">
+                            🗡️ พลังโจมตี: <strong id="stat-atk" class="font-bold text-rose-400">15</strong>
+                        </span>
+                        <span class="bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 flex items-center gap-1.5 text-amber-300">
+                            🛡️ ป้องกัน: <strong id="stat-def" class="font-bold text-amber-400">8</strong>
+                        </span>
+                        <!-- Status Effects List -->
+                        <div id="status-container" class="flex gap-1.5">
+                            <!-- Injected Dynamically e.g. <span class="bg-emerald-900/50 text-emerald-300 px-2 py-1 rounded">🧪 ติดพิษ</span> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combat Arena Visuals -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 md:p-8 backdrop-blur-sm relative overflow-hidden">
+                <!-- Background ambient lights -->
+                <div class="absolute -left-20 -top-20 w-80 h-80 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>
+                <div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-purple-500/5 blur-3xl pointer-events-none"></div>
+
+                <!-- Left Column: Player Model Area -->
+                <div id="player-side" class="flex flex-col items-center justify-center p-4 transition-transform duration-300">
+                    <div id="player-character-mesh" class="w-40 h-40 flex items-center justify-center text-8xl transition-all duration-300 drop-shadow-[0_10px_20px_rgba(99,102,241,0.2)]">
+                        🛡️
+                    </div>
+                    <div class="mt-4 text-center">
+                        <div class="text-xs text-indigo-400 uppercase tracking-widest font-bold">ฮีโร่ของคุณ</div>
+                        <div id="arena-player-name" class="font-extrabold text-xl text-white mt-1">เดชา</div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Monster Area -->
+                <div id="monster-side" class="flex flex-col items-center justify-center p-4 transition-transform duration-300 animate-monster">
+                    <div id="monster-avatar" class="w-40 h-40 flex items-center justify-center text-8xl drop-shadow-[0_10px_20px_rgba(244,63,94,0.25)]">
+                        👾
+                    </div>
+                    <div class="mt-4 text-center w-full max-w-xs space-y-2">
+                        <div class="text-xs text-rose-400 uppercase tracking-widest font-bold" id="monster-stage-tag">STAGE 1 MONSTER</div>
+                        <div id="monster-name" class="font-extrabold text-xl text-white">ดีคอมโพส มอนสเตอร์</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 max-w-[200px]">
+                                <div id="monster-hp-bar" class="bg-rose-500 h-full transition-all duration-300" style="width: 100%"></div>
+                            </div>
+                            <span id="monster-hp-text" class="text-xs text-rose-300 font-mono font-bold">100/100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Turn Indicator Overlay -->
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-950/95 border border-slate-800 px-6 py-2 rounded-full shadow-lg text-center flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" id="turn-light"></div>
+                    <span id="turn-banner" class="text-xs font-bold text-slate-300 tracking-wider">เทิร์นของคุณ: โจมตีศัตรู!</span>
+                </div>
+            </div>
+
+            <!-- Quiz & Control Box -->
+            <div id="quiz-box" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 glow-active transition-all">
+                
+                <!-- Quiz Header & Timer -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800">
+                    <div class="space-y-1">
+                        <span id="quiz-indicator" class="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs rounded-md font-bold">เทิร์นโจมตี (คูณดาเมจ)</span>
+                        <h4 class="text-slate-400 text-xs">วิเคราะห์สถานการณ์เพื่อเลือกคำตอบที่ถูกต้อง</h4>
+                    </div>
+                    <!-- Timer -->
+                    <div class="flex items-center gap-3 bg-slate-950/80 border border-slate-800 px-4 py-2 rounded-xl self-end sm:self-auto">
+                        <i class="far fa-clock text-amber-400 animate-pulse"></i>
+                        <span id="timer-text" class="font-mono text-lg font-bold text-amber-400 w-8 text-center">20</span>
+                        <div class="w-24 bg-slate-900 h-2 rounded-full overflow-hidden">
+                            <div id="timer-progress" class="bg-amber-400 h-full transition-all duration-100" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- The Question Content -->
+                <div class="space-y-4">
+                    <p id="question-text" class="text-lg md:text-xl font-bold text-white leading-relaxed">
+                        คำถามกำลังดาวน์โหลด...
+                    </p>
+                </div>
+
+                <!-- Answer Options (Grid 4 options) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="options-container">
+                    <!-- Sample Option Button -->
+                    <button class="text-left p-4 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800/50 hover:border-indigo-500 text-slate-300 transition-all flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5 border border-slate-800">ก</span>
+                        <span>คำตอบตัวเลือกจำลองยังไม่ได้รับการเปิดใช้งาน</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feedback Toast / Action Popup -->
+            <div id="battle-log" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-center text-sm text-slate-400 font-mono">
+                ⚔️ เตรียมตัวให้พร้อม... เริ่มการต่อสู้!
+            </div>
+        </div>
+
+        <!-- 4. SCREEN: BONUS ITEM UPGRADE SELECTION (MODAL-LIKE INLINE) -->
+        <div id="screen-bonus" class="hidden w-full max-w-2xl bg-slate-900/95 border border-yellow-500/30 rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-yellow-500/10 blur-3xl"></div>
+            <div class="space-y-2">
+                <span class="px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold rounded-full uppercase">คำถามพิเศษสำเร็จ!</span>
+                <h3 class="text-3xl font-black text-white">🎁 รับสิทธิ์อัปเกรดพลังของผู้กล้า 🎁</h3>
+                <p class="text-slate-400 text-sm max-w-md mx-auto">คุณตอบคำถามโบนัสสำเร็จ เลือกเพิ่มความสามารถถาวรเพื่อเตรียมพร้อมในด่านต่อไปได้เลย!</p>
+            </div>
+
+            <!-- Reward Options -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                <!-- Option 1: HP -->
+                <div onclick="applyBonusUpgrade('hp')" class="border border-slate-800 bg-slate-950/80 p-5 rounded-xl cursor-pointer hover:border-yellow-500 hover:bg-yellow-950/10 transition-all flex flex-col justify-between h-full group">
+                    <div class="text-4xl mb-2 group-hover:scale-110 transition-transform">❤️</div>
+                    <div>
+                        <h4 class="font-bold text-white">ฟื้นฟู & เพิ่ม HP</h4>
+                        <p class="text-xs text-slate-400 mt-2">เพิ่ม Max HP ถาวร +30 หน่วย และเติมพลังชีวิตกลับมาเต็มทันที</p>
+                    </div>
+                    <div class="mt-4 py-1.5 bg-emerald-950 border border-emerald-500/20 rounded-lg text-xs font-bold text-emerald-400">เลือกอัปเกรดนี้</div>
+                </div>
+
+                <!-- Option 2: ATK -->
+                <div onclick="applyBonusUpgrade('atk')" class="border border-slate-800 bg-slate-950/80 p-5 rounded-xl cursor-pointer hover:border-yellow-500 hover:bg-yellow-950/10 transition-all flex flex-col justify-between h-full group">
+                    <div class="text-4xl mb-2 group-hover:scale-110 transition-transform">🗡️</div>
+                    <div>
+                        <h4 class="font-bold text-white">เสริมพลังโจมตี</h4>
+                        <p class="text-xs text-slate-400 mt-2">เพิ่มพลังโจมตีพื้นฐานอย่างถาวร +10 หน่วย โจมตีศัตรูได้รวดเร็วขึ้น</p>
+                    </div>
+                    <div class="mt-4 py-1.5 bg-rose-950 border border-rose-500/20 rounded-lg text-xs font-bold text-rose-400">เลือกอัปเกรดนี้</div>
+                </div>
+
+                <!-- Option 3: DEF -->
+                <div onclick="applyBonusUpgrade('def')" class="border border-slate-800 bg-slate-950/80 p-5 rounded-xl cursor-pointer hover:border-yellow-500 hover:bg-yellow-950/10 transition-all flex flex-col justify-between h-full group">
+                    <div class="text-4xl mb-2 group-hover:scale-110 transition-transform">🛡️</div>
+                    <div>
+                        <h4 class="font-bold text-white">เพิ่มพลังป้องกัน</h4>
+                        <p class="text-xs text-slate-400 mt-2">เพิ่มพลังป้องกันถาวร +6 หน่วย ช่วยต้านทานการโจมตีได้ดีขึ้นมาก</p>
+                    </div>
+                    <div class="mt-4 py-1.5 bg-amber-950 border border-amber-500/20 rounded-lg text-xs font-bold text-amber-400">เลือกอัปเกรดนี้</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. SCREEN: GAME OVER / VICTORY -->
+        <div id="screen-gameover" class="hidden w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
+            <!-- Header visual block -->
+            <div id="gameover-visual" class="text-8xl animate-bounce">🏆</div>
+            <div class="space-y-2">
+                <h2 id="gameover-title" class="text-3xl font-black text-white">คุณชนะเกมการผจญภัย!</h2>
+                <p id="gameover-subtitle" class="text-slate-400 text-sm">สุดยอดฝีมือ สามารถวิเคราะห์แนวคิดเชิงคำนวณได้อย่างแตกฉาน</p>
+            </div>
+
+            <!-- Scorecard & Stats Summary -->
+            <div class="bg-slate-950 rounded-xl p-5 text-left border border-slate-800 space-y-3 font-mono text-sm">
+                <div class="flex justify-between border-b border-slate-800/50 pb-2">
+                    <span class="text-slate-400">ผู้เล่น:</span>
+                    <strong id="summary-player-name" class="text-white">เดชา</strong>
+                </div>
+                <div class="flex justify-between border-b border-slate-800/50 pb-2">
+                    <span class="text-slate-400">อาชีพคลาส:</span>
+                    <strong id="summary-player-class" class="text-indigo-400">นักรบ</strong>
+                </div>
+                <div class="flex justify-between border-b border-slate-800/50 pb-2">
+                    <span class="text-slate-400">ตอบถูกทั้งหมด:</span>
+                    <strong id="summary-correct-answers" class="text-emerald-400">10 / 12</strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">ระดับความสำเร็จ:</span>
+                    <strong id="summary-rank" class="text-yellow-400">ระดับเหรียญทอง</strong>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button onclick="returnToMainMenu()" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-colors">
+                    <i class="fas fa-home mr-1"></i> กลับหน้าหลัก
+                </button>
+                <button onclick="restartGame()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/30">
+                    <i class="fas fa-redo mr-1"></i> เล่นใหม่อีกครั้ง
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-4 text-center bg-slate-950 border-t border-slate-900 text-xs text-slate-500">
+        <p>&copy; 2026 Computational Thinking RPG Adventure. พัฒนาขึ้นเพื่อส่งเสริมการเรียนรู้วิทยาการคำนวณ ระดับชั้น ม.4</p>
+    </footer>
+
+    <!-- Audio Synthesis and Game Logic Script -->
+    <script>
+        // --- SOUND EFFECTS (Web Audio API for No-Dependency Synthesized SFX) ---
+        let isMuted = false;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSynthSound(type) {
+            if (isMuted) return;
+            try {
+                // Ensure audio context is running
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'hit_correct') {
+                    // Upward retro synth ding
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.setValueAtTime(600, now + 0.08);
+                    osc.frequency.setValueAtTime(900, now + 0.16);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'hit_incorrect') {
+                    // Downward buzzer
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(80, now + 0.25);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'win') {
+                    // Chiptune level up melody
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                        noteGain.gain.setValueAtTime(0.1, now + idx * 0.1);
+                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.15);
+                        noteOsc.start(now + idx * 0.1);
+                        noteOsc.stop(now + idx * 0.1 + 0.15);
+                    });
+                } else if (type === 'gameover') {
+                    // Sad descending notes
+                    const notes = [293.66, 261.63, 220.00, 146.83]; // D4, C4, A3, D3
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.15);
+                        noteGain.gain.setValueAtTime(0.1, now + idx * 0.15);
+                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.15 + 0.2);
+                        noteOsc.start(now + idx * 0.15);
+                        noteOsc.stop(now + idx * 0.15 + 0.25);
+                    });
+                } else if (type === 'bonus') {
+                    // Fast arpeggio
+                    const notes = [440, 554, 659, 880]; // A4, C#5, E5, A5
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.05);
+                        noteGain.gain.setValueAtTime(0.1, now + idx * 0.05);
+                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.05 + 0.1);
+                        noteOsc.start(now + idx * 0.05);
+                        noteOsc.stop(now + idx * 0.05 + 0.1);
+                    });
+                }
+            } catch (err) {
+                console.warn('Audio Context is not allowed or supported on this device:', err);
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('soundIcon');
+            if (isMuted) {
+                icon.className = 'fas fa-volume-mute text-rose-500';
+            } else {
+                icon.className = 'fas fa-volume-up';
+                playSynthSound('click');
+            }
+        }
+
+
+        // --- QUESTION BANK & DATA SCHEMAS ---
+        // Questions themed around computational thinking topics for Grade 10 (ม.4)
+        const QUESTIONS = {
+            // Stage 1: Decomposition (การย่อยปัญหา)
+            decomposition: [
+                {
+                    q: "ข้อใดอธิบายความหมายของ 'การย่อยปัญหา (Decomposition)' ได้ถูกต้องที่สุด?",
+                    a: [
+                        { text: "การนำปัญหาใหญ่มาแบ่งย่อยออกเป็นปัญหาย่อยๆ เพื่อให้ง่ายต่อการจัดการและแก้ปัญหา", correct: true },
+                        { text: "การนำปัญหามาเขียนเป็นลำดับผังงานที่มีจุดเริ่มต้นและจุดสิ้นสุด", correct: false },
+                        { text: "การซ่อนรายละเอียดส่วนประกอบอื่นๆ ไว้และดึงเฉพาะลักษณะเด่น", correct: false },
+                        { text: "การค้นหาเงื่อนไขที่เหมือนหรือคล้ายคลึงกันในสิ่งของต่างๆ", correct: false }
+                    ],
+                    explanation: "การย่อยปัญหา (Decomposition) คือการสลายวิเคราะห์กลุ่มปัญหาใหญ่ให้กลายมาเป็นองค์ประกอบย่อยขนาดเล็กที่มีความซับซ้อนน้อยกว่าลงไป เพื่อนำมาวิเคราะห์ทีละส่วน"
+                },
+                {
+                    q: "สมชายต้องการสร้างรถของเล่นหนึ่งคัน สมควรจัดกลุ่มการย่อยปัญหาข้อใดเหมาะสมที่สุด?",
+                    a: [
+                        { text: "แยกวิเคราะห์ส่วนล้อ รถ, ส่วนตัวถังรถ, ส่วนเครื่องยนต์ และส่วนระบบส่งกำลัง", correct: true },
+                        { text: "การวาดภาพร่างรูปร่างรวมๆ ของตัวรถให้สวยงามที่สุด", correct: false },
+                        { text: "การหาว่ารถของเล่นที่เขาเคยทำเมื่อปีก่อนหน้าใช้สีอะไร", correct: false },
+                        { text: "การสรุปเขียนแผนพับสรุปรายงานการส่งครู", correct: false }
+                    ],
+                    explanation: "การแบ่งแยกรถออกเป็นระบบล้อ, ตัวถัง, เครื่องยนต์ และกำลังขับเคลื่อน คือการแยกองค์ประกอบหลักออกเป็นส่วนย่อยย่อยเพื่อออกแบบและจัดทำง่ายขึ้น"
+                },
+                {
+                    q: "หากเรากำลังเผชิญหน้ากับโจทย์ปัญหาคณิตศาสตร์ที่แสนยาก การนำ 'แนวคิดการย่อยปัญหา' ไปใช้ประโยชน์เริ่มแรกที่เหมาะสมที่สุดคืออะไร?",
+                    a: [
+                        { text: "แยกโจทย์ออกเป็นสิ่งทีโจทย์กำหนดให้ สิ่งที่โจทย์ต้องการ และกลุ่มสูตรคำนวณย่อย", correct: true },
+                        { text: "เดาคำตอบก่อนเพื่อประหยัดเวลาการแก้ไขปัญหา", correct: false },
+                        { text: "เขียนอีเมลปรึกษาผู้ทรงคุณวุฒิโดยทันที", correct: false },
+                        { text: "ทิ้งโจทย์ข้อนั้นแล้วไปค้นคว้าหาโจทย์จากข้อสอบต่างประเทศมาทำแทน", correct: false }
+                    ],
+                    explanation: "การแจกแจงสิ่งที่โจทย์กำหนดให้ สิ่งที่ต้องการ และการแบ่งขั้นตอนคำนวณทีละสมการ เป็นการใช้แนวคิดสลายปัญหาให้เบาบางลง"
+                }
+            ],
+            // Stage 2: Pattern Recognition (การจดจำรูปแบบ)
+            pattern: [
+                {
+                    q: "กระบวนการเปรียบเทียบความคุ้นเคย ความเหมือน คล้ายคลึง ของกลุ่มข้อมูลเรียกว่าอะไร?",
+                    a: [
+                        { text: "การจดจำรูปแบบ (Pattern Recognition)", correct: true },
+                        { text: "การคิดเชิงนามธรรม (Abstraction)", correct: false },
+                        { text: "การออกแบบอัลกอริทึม (Algorithm)", correct: false },
+                        { text: "การย่อยสลาย (Decomposition)", correct: false }
+                    ],
+                    explanation: "การจดจำรูปแบบ (Pattern Recognition) ช่วยให้เราเชื่อมโยงความรู้เดิมที่เคยทำสำเร็จมาใช้แก้ปัญหาที่คล้ายๆ กันได้เร็วขึ้น"
+                },
+                {
+                    q: "ในการสังเกตว่าพฤติกรรมลูกค้ามักซื้อขนมปังคู่กับนมทุกๆ เช้าวันจันทร์ จัดเป็นส่วนใดในแนวคิดเชิงคำนวณ?",
+                    a: [
+                        { text: "การจดจำรูปแบบ (Pattern Recognition)", correct: true },
+                        { text: "การประเมินประสิทธิภาพการทำงาน", correct: false },
+                        { text: "การเขียนรหัสจำลอง (Pseudo code)", correct: false },
+                        { text: "การแตกปัญหาออกเป็นปัญหาย่อย", correct: false }
+                    ],
+                    explanation: "การจับความสัมพันธ์ว่าสิ่งใดเกิดขึ้นร่วมกันหรือเกิดซ้ำกันเป็นลักษณะประจำ เป็นการจดจำรูปแบบและสถิติคพฤติกรรม"
+                },
+                {
+                    q: "คำถามอนุกรมภาพ: จากลำดับสัญลักษณ์ [🔼, 🔽, 🔼, 🔽, ... ] ตัวต่อไปควรเป็นรูปใด และใช้ทักษะคำนวณด้านใด?",
+                    a: [
+                        { text: "🔼 (ใช้ทักษะการจดจำรูปแบบ)", correct: true },
+                        { text: "🔽 (ใช้ทักษะการย่อยปัญหา)", correct: false },
+                        { text: "⏺️ (ใช้ทักษะการคิดเชิงนามธรรม)", correct: false },
+                        { text: "🔽 (ใช้ทักษะการคิดเชิงนามธรรม)", correct: false }
+                    ],
+                    explanation: "รูปแบบวนลูปสลับกันระหว่งสามเหลี่ยมตั้งกับสามเหลี่ยมกลับหัว เป็นรูปแบบที่ซ้ำไปมา การเลือก 🔼 ถัดไปจึงเป็น Pattern Recognition"
+                }
+            ],
+            // Stage 3: Abstraction (การคิดเชิงนามธรรม)
+            abstraction: [
+                {
+                    q: "ข้อใดหมายถึงจุดเด่นหลักของ 'การคิดเชิงนามธรรม (Abstraction)'?",
+                    a: [
+                        { text: "คัดกรองส่วนสำคัญ เก็บข้อมูลที่จำเป็นไว้ และละทิ้งรายละเอียดที่ไม่เกี่ยวโยงออกจากโจทย์", correct: true },
+                        { text: "การลงสีภาพเขียนให้ออกมาเหมือนจริงมากที่สุดเพื่อเสนอลูกค้า", correct: false },
+                        { text: "การตรวจเช็กคำสะกดผิดในรายงานทีละจุดอย่างระมัดระวัง", correct: false },
+                        { text: "การรวมเอาปัญหาย่อยทั้งหมดมาคิดรวมกันในคราวเดียวเพื่อให้ดูอลังการ", correct: false }
+                    ],
+                    explanation: "การคิดเชิงนามธรรมจะมุ่งเน้นสกัดส่วนที่เป็นสาระสำคัญและละทิ้งรายละเอียดยิบย่อยที่ไม่เกี่ยวข้องออกไป เพื่อให้เห็นโครงสร้างแกนกลางของปัญหา"
+                },
+                {
+                    q: "เวลาเราดู 'แผนผังเส้นทางรถไฟฟ้า BTS และ MRT' แผนผังนี้สื่อสารด้วยแนวคิดเชิงคำนวณข้อใดมากที่สุด?",
+                    a: [
+                        { text: "การคิดเชิงนามธรรม เพราะลดรูปสเกลความกว้างของตึกแม่น้ำออก เหลือแค่ลำดับสถานีรถไฟฟ้า", correct: true },
+                        { text: "การแตกปัญหาให้ละเอียดย่อย เพราะแจกแจงทุกซอกซอยบ้านเรือนรอบข้าง", correct: false },
+                        { text: "การออกแบบอัลกอริทึม เพราะบอกวิธีการหมุนเวียนกระแสไฟฟ้าของรถไฟ", correct: false },
+                        { text: "การเขียนรหัสจำลอง เพราะใช้โค้ดคอมพิวเตอร์เขียนเส้นแผนที่", correct: false }
+                    ],
+                    explanation: "แผนที่รถไฟฟ้าไม่ได้ใส่ข้อมูลตึก ถนน ซอกซอย เพื่อให้ผู้โดยสารจับประเด็นแค่ว่าสถานีใดเชื่อมต่อกับสถานีใดได้ง่ายที่สุด ซึ่งเป็นการใช้งาน Abstraction อย่างชัดเจน"
+                },
+                {
+                    q: "หากต้องการสร้างแอปพลิเคชันระบบลงทะเบียนเรียน ส่วนข้อมูลใดที่ระบบควรละทิ้ง (เพราะไม่ใช่เรื่องที่จำเป็นตามแนวคิดนามธรรม)?",
+                    a: [
+                        { text: "ส่วนสูง น้ำหนัก และสีผมของนักเรียน", correct: true },
+                        { text: "รหัสประจำตัวประชาชนของนักเรียน", correct: false },
+                        { text: "รายวิชาและกลุ่มผลการเรียนที่ต้องการลงเรียน", correct: false },
+                        { text: "ข้อมูลเบอร์โทรศัพท์ติดต่อและชื่อผู้ปกครอง", correct: false }
+                    ],
+                    explanation: "ส่วนสูง น้ำหนัก หรือสีผมของนักเรียนไม่มีผลต่อขั้นตอนและเงื่อนไขการลงทะเบียน จึงควรละทิ้งข้อมูลส่วนนี้ไป"
+                }
+            ],
+            // Stage 4: Algorithm (การออกแบบอัลกอริทึม)
+            algorithm: [
+                {
+                    q: "ลำดับการออกแบบขั้นตอนวิธีการแก้ปัญหาแบบเป็นขั้นเป็นตอน ชัดเจน เข้าใจง่าย มีจุดเริ่มและสิ้นสุดเรียกว่าอะไร?",
+                    a: [
+                        { text: "การออกแบบอัลกอริทึม (Algorithm Design)", correct: true },
+                        { text: "การแตกแยกย่อยโครงสร้างระบบ", correct: false },
+                        { text: "การวิจัยเชิงพฤทีธรรมทางข้อมูล", correct: false },
+                        { text: "การคิดเชิงรูปธรรมที่มองไม่เห็น", correct: false }
+                    ],
+                    explanation: "การออกแบบอัลกอริทึม (Algorithm Design) เป็นขั้นตอนในการระบุวิธีทำงานแบบเป็นลำดับขั้น 1, 2, 3 เพื่อให้คอมพิวเตอร์หรือบุคคลนำไปปฏิบัติตามผลลัพธ์เดียวกัน"
+                },
+                {
+                    q: "เมื่อต้องการสื่อสารอัลกอริทึมให้โปรแกรมเมอร์นำไปเขียนโค้ดได้รวดเร็วขึ้น นิยมเลือกใช้เครื่องมือใด?",
+                    a: [
+                        { text: "ผังงาน (Flowchart) และ รหัสจำลอง (Pseudocode)", correct: true },
+                        { text: "ภาพวาดจิตรกรรมสีน้ำและภาพสามมิติ", correct: false },
+                        { text: "การบรรยายโครงเรื่องสั้นแบบวรรณกรรม", correct: false },
+                        { text: "การประดิษฐ์หุ่นจำลองเสมือนจริงขึ้นมาใช้งาน", correct: false }
+                    ],
+                    explanation: "Flowchart และ Pseudocode เป็นสื่อกลางมาตรฐานที่ช่วยจำลองอัลกอริทึมขั้นตอนความคิดออกมาเป็นรูปแบบสากลก่อนเขียนโปรแกรมจริง"
+                },
+                {
+                    q: "ในผังงานคอมพิวเตอร์ สัญลักษณ์ 'สี่เหลี่ยมผืนผ้า (Rectangle)' หมายถึงอะไร?",
+                    a: [
+                        { text: "การประมวลผล / การทำงาน (Process)", correct: true },
+                        { text: "การตัดสินใจตามเงื่อนไข (Decision)", correct: false },
+                        { text: "จุดเริ่มต้นและสิ้นสุดผังงาน (Start/End)", correct: false },
+                        { text: "การรับข้อมูลเข้าและส่งออก (Input/Output)", correct: false }
+                    ],
+                    explanation: "สี่เหลี่ยมผืนผ้าแสดงถึงขั้นตอนการกระทำหรือประมวลผลคำนวณทั่วไป (Process)"
+                }
+            ],
+            // Bonus / Special Item upgrading question pool
+            bonus: [
+                {
+                    q: "การรวบรวมแนวคิดย่อยๆ ทั้ง 4 ข้อ (ย่อยปัญหา, จดจำรูปแบบ, นามธรรม, อัลกอริทึม) รวมกันเรียกว่าอะไร?",
+                    a: [
+                        { text: "แนวคิดเชิงคำนวณ (Computational Thinking)", correct: true },
+                        { text: "เทคโนโลยีประดิษฐ์สร้างสรรค์", correct: false },
+                        { text: "ทฤษฎีสารสนเทศและเกมมิ่ง", correct: false },
+                        { text: "วิทยาการก้าวล้ำเชิงพาณิชย์", correct: false }
+                    ],
+                    explanation: "ทั้ง 4 ส่วนรวมกันเป็นเสาหลักแก่นของแนวคิดเชิงคำนวณ (Computational Thinking)"
+                },
+                {
+                    q: "หากเราใช้อัลกอริทึมที่ไม่มีประสิทธิภาพ ผลกระทบหลักที่จะเกิดแก่คอมพิวเตอร์คืออะไร?",
+                    a: [
+                        { text: "การประมวลผลช้ากว่าปกติ เปลืองแรมและหน่วยประมวลผลโดยไม่จำเป็น", correct: true },
+                        { text: "ตัวเครื่องคอมพิวเตอร์จะส่งเสียงเพลงเตือนภัยแปลกๆ", correct: false },
+                        { text: "สีของหน้าจอมอนิเตอร์จะผิดเพี้ยนไปเป็นโทนสีน้ำเงิน", correct: false },
+                        { text: "หน้าสัมผัสของคีย์บอร์ดจะเสื่อมถอยเร็วขึ้น", correct: false }
+                    ],
+                    explanation: "อัลกอริทึมที่ซ้ำซ้อนจะสร้างภาระการทำงานหนักแก่หน่วยประมวลผล ทำให้อุปกรณ์กินทรัพยากรระบบสูงโดยเปล่าประโยชน์"
+                }
+            ]
+        };
+
+        // --- CHARACTER HERO TEMPLATES ---
+        const HERO_TEMPLATES = {
+            warrior: {
+                name: "เดชา (นักรบ)",
+                avatar: "🛡️",
+                className: "นักรบ",
+                maxHp: 120,
+                atk: 15,
+                def: 8,
+                resistBonus: 0.3 // 30% chance to resist statuses
+            },
+            mage: {
+                name: "กานดา (นักเวทย์)",
+                avatar: "🔮",
+                className: "นักเวทย์",
+                maxHp: 80,
+                atk: 25,
+                def: 3,
+                resistBonus: 0.0
+            },
+            archer: {
+                name: "ชาลี (นักธนู)",
+                avatar: "🏹",
+                className: "นักธนู",
+                maxHp: 100,
+                atk: 18,
+                def: 5,
+                resistBonus: 0.15
+            }
+        };
+
+        // --- MONSTER STAGE LIST ---
+        const STAGE_MONSTERS = [
+            {
+                id: 1,
+                name: "ดีคอมโพส เกรมลิน",
+                avatar: "👾",
+                maxHp: 40,
+                atk: 12,
+                title: "การย่อยปัญหา (Decomposition)",
+                topicKey: "decomposition"
+            },
+            {
+                id: 2,
+                name: "ซอร์ด-แพทเทิร์น คิเมร่า",
+                avatar: "🐉",
+                maxHp: 55,
+                atk: 18,
+                title: "การจดจำรูปแบบ (Pattern Recognition)",
+                topicKey: "pattern"
+            },
+            {
+                id: 3,
+                name: "แอบสแตรกต์ แฟนธอม",
+                avatar: "👻",
+                maxHp: 70,
+                atk: 25,
+                title: "การคิดเชิงนามธรรม (Abstraction)",
+                topicKey: "abstraction"
+            },
+            {
+                id: 4,
+                name: "คิง อัลกอริทึม ลอร์ด",
+                avatar: "🤖",
+                maxHp: 90,
+                atk: 32,
+                title: "การออกแบบอัลกอริทึม (Algorithm Design)",
+                topicKey: "algorithm"
+            }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let gameState = {
+            playerName: "ผู้กล้า",
+            heroClass: "warrior",
+            playerHp: 100,
+            playerMaxHp: 100,
+            playerAtk: 15,
+            playerDef: 5,
+            playerResist: 0.15,
+            currentStageIdx: 0,
+            monsterHp: 100,
+            monsterMaxHp: 100,
+            activeTurn: "player", // "player" (โจมตี) or "monster" (หลบหลีก) or "bonus"
+            currentQuestion: null,
+            timer: 20,
+            timerInterval: null,
+            correctCount: 0,
+            totalAnswered: 0,
+            activeStatusEffects: [], // e.g. { type: 'poison', duration: 2 }
+            usedQuestions: [], // Tracking to avoid duplicates
+            bonusStepPending: false
+        };
+
+        // Initialize Selection
+        let selectedHeroKey = "warrior";
+        selectHero(selectedHeroKey);
+
+        // UI Event Helpers
+        function selectHero(heroKey) {
+            selectedHeroKey = heroKey;
+            // Highlight Selected Card
+            document.querySelectorAll('.hero-card').forEach(card => {
+                card.classList.remove('border-indigo-500', 'bg-indigo-950/20', 'glow-active');
+                card.classList.add('border-slate-800', 'bg-slate-950');
+            });
+            const selectedCard = document.getElementById(`hero-card-${heroKey}`);
+            selectedCard.classList.remove('border-slate-800', 'bg-slate-950');
+            selectedCard.classList.add('border-indigo-500', 'bg-indigo-950/20', 'glow-active');
+            playSynthSound('click');
+        }
+
+        function toggleHowToPlay(show) {
+            const modal = document.getElementById('modal-howto');
+            if (show) {
+                modal.classList.remove('hidden');
+                playSynthSound('click');
+            } else {
+                modal.classList.add('hidden');
+                playSynthSound('click');
+            }
+        }
+
+        // --- GAME START & RESTART ---
+        function startGame() {
+            playSynthSound('click');
+            const inputName = document.getElementById('player-name-input').value.trim();
+            gameState.playerName = inputName !== "" ? inputName : "ผู้กล้า";
+            gameState.heroClass = selectedHeroKey;
+            
+            // Set Hero Stats
+            const template = HERO_TEMPLATES[selectedHeroKey];
+            gameState.playerMaxHp = template.maxHp;
+            gameState.playerHp = template.maxHp;
+            gameState.playerAtk = template.atk;
+            gameState.playerDef = template.def;
+            gameState.playerResist = template.resistBonus;
+
+            // Setup First Stage
+            gameState.currentStageIdx = 0;
+            gameState.correctCount = 0;
+            gameState.totalAnswered = 0;
+            gameState.activeStatusEffects = [];
+            gameState.usedQuestions = [];
+            gameState.activeTurn = "player";
+
+            // Show HUD & Arena
+            document.getElementById('screen-lobby').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            document.getElementById('homeBtn').classList.remove('hidden');
+
+            setupStage();
+        }
+
+        function returnToMainMenu() {
+            playSynthSound('click');
+            clearInterval(gameState.timerInterval);
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-bonus').classList.add('hidden');
+            document.getElementById('screen-gameover').classList.add('hidden');
+            document.getElementById('screen-lobby').classList.remove('hidden');
+            document.getElementById('homeBtn').classList.add('hidden');
+        }
+
+        function restartGame() {
+            playSynthSound('click');
+            document.getElementById('screen-gameover').classList.add('hidden');
+            startGame();
+        }
+
+        // --- BATTLE SYSTEM STAGE FLOW ---
+        function setupStage() {
+            const stage = STAGE_MONSTERS[gameState.currentStageIdx];
+            gameState.monsterMaxHp = stage.maxHp;
+            gameState.monsterHp = stage.maxHp;
+            gameState.activeTurn = "player"; // reset turn to Player attack
+
+            // Update UI
+            document.getElementById('stage-number').textContent = `STAGE ${stage.id} / 4`;
+            document.getElementById('stage-name').textContent = stage.title;
+            document.getElementById('stage-progress-bar').style.width = `${(stage.id / 4) * 100}%`;
+
+            // Monster Card Setup
+            document.getElementById('monster-avatar').textContent = stage.avatar;
+            document.getElementById('monster-name').textContent = stage.name;
+            document.getElementById('monster-stage-tag').textContent = `STAGE ${stage.id} MONSTER`;
+
+            updateHUD();
+            logBattle(`⚔️ มอนสเตอร์โผล่มา! เดินทางมาถึง: ${stage.title}. เผชิญหน้ากับ ${stage.name}!`);
+            
+            // Trigger combat turn loop
+            triggerNextTurn();
+        }
+
+        function updateHUD() {
+            const template = HERO_TEMPLATES[gameState.heroClass];
+            // Player HUD update
+            document.getElementById('hud-player-name').textContent = gameState.playerName;
+            document.getElementById('hud-player-class').textContent = template.className;
+            document.getElementById('hud-avatar').textContent = template.avatar;
+            document.getElementById('arena-player-name').textContent = gameState.playerName;
+            document.getElementById('player-character-mesh').textContent = template.avatar;
+
+            // Player HP
+            const hpPercent = Math.max(0, (gameState.playerHp / gameState.playerMaxHp) * 100);
+            document.getElementById('player-hp-bar').style.width = `${hpPercent}%`;
+            document.getElementById('player-hp-text').textContent = `${gameState.playerHp}/${gameState.playerMaxHp}`;
+            // HP Bar Color change
+            const bar = document.getElementById('player-hp-bar');
+            if (hpPercent > 50) {
+                bar.className = 'bg-emerald-500 h-full transition-all duration-300';
+            } else if (hpPercent > 20) {
+                bar.className = 'bg-amber-500 h-full transition-all duration-300';
+            } else {
+                bar.className = 'bg-rose-500 h-full transition-all duration-300';
+            }
+
+            // Stats HUD
+            document.getElementById('stat-atk').textContent = gameState.playerAtk;
+            document.getElementById('stat-def').textContent = gameState.playerDef;
+
+            // Monster HP Update
+            const mHpPercent = Math.max(0, (gameState.monsterHp / gameState.monsterMaxHp) * 100);
+            document.getElementById('monster-hp-bar').style.width = `${mHpPercent}%`;
+            document.getElementById('monster-hp-text').textContent = `${gameState.monsterHp}/${gameState.monsterMaxHp}`;
+
+            // Render Status Conditions
+            const statusContainer = document.getElementById('status-container');
+            statusContainer.innerHTML = '';
+            gameState.activeStatusEffects.forEach(status => {
+                let badge = '';
+                if (status.type === 'stun') {
+                    badge = `<span class="bg-amber-950 border border-amber-500/30 text-amber-300 px-2.5 py-1 rounded-lg flex items-center gap-1">⚡ มึนงง (${status.duration})</span>`;
+                } else if (status.type === 'poison') {
+                    badge = `<span class="bg-emerald-950 border border-emerald-500/30 text-emerald-300 px-2.5 py-1 rounded-lg flex items-center gap-1">🧪 ติดพิษ (${status.duration})</span>`;
+                } else if (status.type === 'freeze') {
+                    badge = `<span class="bg-sky-950 border border-sky-500/30 text-sky-300 px-2.5 py-1 rounded-lg flex items-center gap-1">❄️ แช่แข็ง (${status.duration})</span>`;
+                }
+                statusContainer.innerHTML += badge;
+            });
+        }
+
+        function logBattle(message) {
+            const logger = document.getElementById('battle-log');
+            logger.innerHTML = message;
+        }
+
+        // --- TIMER HANDLERS ---
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            gameState.timer = 20;
+            document.getElementById('timer-text').textContent = gameState.timer;
+            document.getElementById('timer-progress').style.width = '100%';
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timer--;
+                document.getElementById('timer-text').textContent = gameState.timer;
+                
+                const progressPercent = (gameState.timer / 20) * 100;
+                document.getElementById('timer-progress').style.width = `${progressPercent}%`;
+
+                // Urgent timer warning
+                if (gameState.timer <= 5) {
+                    document.getElementById('timer-text').className = 'font-mono text-lg font-bold text-rose-500 animate-pulse w-8 text-center';
+                    document.getElementById('timer-progress').className = 'bg-rose-500 h-full transition-all duration-100';
+                } else {
+                    document.getElementById('timer-text').className = 'font-mono text-lg font-bold text-amber-400 w-8 text-center';
+                    document.getElementById('timer-progress').className = 'bg-amber-400 h-full transition-all duration-100';
+                }
+
+                if (gameState.timer <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            logBattle("⏰ หมดเวลาตอบคำถาม!");
+            // Treating time-out as an incorrect answer
+            processAnswer(false, "ตอบไม่ทันเวลาการทดสอบ");
+        }
+
+        // --- TURN FLOW & QUIZ MAKER ---
+        function triggerNextTurn() {
+            // Apply Damage Over Time effects first
+            if (gameState.activeTurn === "player") {
+                applyStatusEffectsBeginTurn();
+                if (gameState.playerHp <= 0) {
+                    endGame(false);
+                    return;
+                }
+                updateHUD();
+            }
+
+            // Check if player is stunned (skip damage but still answer to get out)
+            let isPlayerStunned = false;
+            const stunIdx = gameState.activeStatusEffects.findIndex(s => s.type === 'stun');
+            if (stunIdx !== -1 && gameState.activeTurn === "player") {
+                isPlayerStunned = true;
+                logBattle("⚡ คุณติดสถานะมึนงง! ไม่สามารถโจมตีได้ในเทิร์นนี้ (ข้ามไปยังเทิร์นป้องกัน)");
+                gameState.activeStatusEffects.splice(stunIdx, 1); // remove stun after skipping
+                setTimeout(() => {
+                    gameState.activeTurn = "monster";
+                    triggerNextTurn();
+                }, 2000);
+                return;
+            }
+
+            // Load relevant question
+            const stage = STAGE_MONSTERS[gameState.currentStageIdx];
+            let questionPool = QUESTIONS[stage.topicKey];
+            
+            // Extract unvisited questions
+            let availableQuestions = questionPool.filter(q => !gameState.usedQuestions.includes(q.q));
+            if (availableQuestions.length === 0) {
+                // reset if exhausted
+                gameState.usedQuestions = gameState.usedQuestions.filter(qName => !questionPool.map(pq => pq.q).includes(qName));
+                availableQuestions = questionPool;
+            }
+
+            // Select random question
+            const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+            const questionData = availableQuestions[randomIndex];
+            gameState.currentQuestion = questionData;
+            gameState.usedQuestions.push(questionData.q);
+
+            // Setup Turn Visuals
+            const turnLight = document.getElementById('turn-light');
+            const turnBanner = document.getElementById('turn-banner');
+            const quizIndicator = document.getElementById('quiz-indicator');
+            const quizBox = document.getElementById('quiz-box');
+
+            if (gameState.activeTurn === "player") {
+                turnLight.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                turnBanner.innerHTML = `ดาบอยู่ในมือท่าน: <span class="text-emerald-400 font-bold">เทิร์นโจมตี!</span>`;
+                quizIndicator.className = "px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs rounded-md font-bold";
+                quizIndicator.textContent = "เทิร์นของเรา: ตอบถูกโจมตีศัตรู";
+                quizBox.className = "bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 glow-active transition-all";
+            } else {
+                turnLight.className = "w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse";
+                turnBanner.innerHTML = `ศัตรูกำลังร่ายเวทย์: <span class="text-rose-400 font-bold">เทิร์นป้องกัน!</span>`;
+                quizIndicator.className = "px-2.5 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs rounded-md font-bold";
+                quizIndicator.textContent = "เทิร์นมอนสเตอร์: ตอบถูกเพื่อหลบหลีก";
+                quizBox.className = "bg-slate-900 border border-rose-900/30 rounded-2xl p-6 md:p-8 space-y-6 transition-all";
+            }
+
+            // Render Question and Options
+            document.getElementById('question-text').textContent = questionData.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            // Shuffle option buttons slightly
+            const shuffledOptions = [...questionData.a].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach((option, idx) => {
+                const label = ["ก", "ข", "ค", "ง"][idx] || "-";
+                const btn = document.createElement('button');
+                btn.className = "text-left p-4 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800/80 hover:border-indigo-500 text-slate-300 transition-all flex items-start gap-3 active:scale-95";
+                btn.innerHTML = `
+                    <span class="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-indigo-400 mt-0.5 border border-slate-800 flex-shrink-0">${label}</span>
+                    <span class="text-sm md:text-base">${option.text}</span>
+                `;
+                btn.onclick = () => {
+                    clearInterval(gameState.timerInterval);
+                    processAnswer(option.correct, questionData.explanation);
+                };
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        // --- ANSWER EVALUATION & ACTIONS ---
+        function processAnswer(isCorrect, explanation) {
+            gameState.totalAnswered++;
+            const playerVisual = document.getElementById('player-side');
+            const monsterVisual = document.getElementById('monster-side');
+
+            // Disable all option buttons
+            const buttons = document.getElementById('options-container').getElementsByTagName('button');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = true;
+                buttons[i].classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            if (gameState.activeTurn === "player") {
+                // --- PLAYER'S ATTACK TURN ---
+                if (isCorrect) {
+                    gameState.correctCount++;
+                    playSynthSound('hit_correct');
+                    
+                    // Attack damage Calculation
+                    const damageDealt = gameState.playerAtk;
+                    gameState.monsterHp = Math.max(0, gameState.monsterHp - damageDealt);
+                    
+                    // Animation
+                    playerVisual.classList.add('animate-attack-l');
+                    setTimeout(() => playerVisual.classList.remove('animate-attack-l'), 500);
+                    monsterVisual.classList.add('animate-shake');
+                    setTimeout(() => monsterVisual.classList.remove('animate-shake'), 400);
+
+                    logBattle(`🎯 <span class="text-emerald-400 font-bold">ถูกต้อง!</span> คุณอัญเชิญอภิปัญญาแนวคิดเชิงคำนวณโจมตีมอนสเตอร์อย่างรุนแรง สร้างความเสียหาย <strong class="text-rose-400 font-bold">${damageDealt}</strong> หน่วย! <br><small class="text-slate-500">เกร็ดความรู้: ${explanation}</small>`);
+                } else {
+                    playSynthSound('hit_incorrect');
+                    logBattle(`❌ <span class="text-rose-400 font-bold">คำตอบไม่ถูกต้อง!</span> คุณพลาดการโจมตีในรอบนี้ ศัตรูแสยะยิ้มหัวเราะเยาะเย้ย! <br><small class="text-slate-500">เกร็ดความรู้: ${explanation}</small>`);
+                }
+
+                // Move to next turn
+                setTimeout(() => {
+                    updateHUD();
+                    if (gameState.monsterHp <= 0) {
+                        handleMonsterDefeated();
+                    } else {
+                        // Swap to monster's defense turn
+                        gameState.activeTurn = "monster";
+                        triggerNextTurn();
+                    }
+                }, 3800);
+
+            } else {
+                // --- MONSTER'S ATTACK TURN (Player defending) ---
+                if (isCorrect) {
+                    gameState.correctCount++;
+                    playSynthSound('hit_correct');
+                    
+                    // Dodge animation
+                    playerVisual.classList.add('translate-y-[-15px]');
+                    setTimeout(() => playerVisual.classList.remove('translate-y-[-15px]'), 400);
+
+                    logBattle(`🛡️ <span class="text-emerald-400 font-bold">หลบหลีกสำเร็จ!</span> คุณตอบคำถามได้ถูกต้อง จึงตระหนักรู้โครงสร้างปัญหาและหลบหลีกการโจมตีของมอนสเตอร์ได้อย่างฉิวเฉียด! <br><small class="text-slate-500">เกร็ดความรู้: ${explanation}</small>`);
+                } else {
+                    playSynthSound('hit_incorrect');
+                    
+                    // Damage Calculation
+                    const monster = STAGE_MONSTERS[gameState.currentStageIdx];
+                    let rawDmg = monster.atk;
+
+                    // Double damage check if frozen
+                    const isFrozen = gameState.activeStatusEffects.some(s => s.type === 'freeze');
+                    if (isFrozen) {
+                        rawDmg = rawDmg * 2;
+                    }
+
+                    // defense mitigation
+                    let actualDmg = Math.max(2, rawDmg - gameState.playerDef);
+                    gameState.playerHp = Math.max(0, gameState.playerHp - actualDmg);
+
+                    // Shaking Player Visual
+                    playerVisual.classList.add('animate-shake');
+                    setTimeout(() => playerVisual.classList.remove('animate-shake'), 400);
+                    monsterVisual.classList.add('animate-attack-r');
+                    setTimeout(() => monsterVisual.classList.remove('animate-attack-r'), 500);
+
+                    // Apply Ailment Status with probability
+                    let ailmentText = "";
+                    const roll = Math.random();
+                    // Resist deduction
+                    if (roll > gameState.playerResist) {
+                        const ailmentRoll = Math.floor(Math.random() * 3); // 0 = stun, 1 = poison, 2 = freeze
+                        
+                        if (ailmentRoll === 0 && !gameState.activeStatusEffects.some(s => s.type === 'stun')) {
+                            gameState.activeStatusEffects.push({ type: 'stun', duration: 1 });
+                            ailmentText = ` ⚠️ และคุณ <span class="text-amber-400 font-bold">ติดสถานะมึนงง (Stun)</span> ไม่สามารถโจมตีได้ในตาหน้า!`;
+                        } else if (ailmentRoll === 1 && !gameState.activeStatusEffects.some(s => s.type === 'poison')) {
+                            gameState.activeStatusEffects.push({ type: 'poison', duration: 2 });
+                            ailmentText = ` ⚠️ และคุณ <span class="text-emerald-400 font-bold">ติดพิษ (Poison)</span> คุณจะเสียเลือดทีละนิดเมื่อเริ่มตา!`;
+                        } else if (ailmentRoll === 2 && !gameState.activeStatusEffects.some(s => s.type === 'freeze')) {
+                            gameState.activeStatusEffects.push({ type: 'freeze', duration: 2 });
+                            ailmentText = ` ⚠️ และคุณ <span class="text-sky-400 font-bold">โดนแช่แข็ง (Freeze)</span> ดาเมจที่โดนรอบหน้าจะคูณ 2!`;
+                        }
+                    }
+
+                    logBattle(`💥 <span class="text-rose-500 font-bold">พลาดโดนโจมตี!</span> ตอบไม่ถูกต้อง ได้รับความเสียหาย <strong class="text-rose-400 font-bold">${actualDmg}</strong> HP!${ailmentText} <br><small class="text-slate-500">เกร็ดความรู้: ${explanation}</small>`);
+                    
+                    // Decrease status durations if applicable (active freeze)
+                    if (isFrozen) {
+                        const freezeIdx = gameState.activeStatusEffects.findIndex(s => s.type === 'freeze');
+                        if (freezeIdx !== -1) {
+                            gameState.activeStatusEffects[freezeIdx].duration--;
+                            if (gameState.activeStatusEffects[freezeIdx].duration <= 0) {
+                                gameState.activeStatusEffects.splice(freezeIdx, 1);
+                            }
+                        }
+                    }
+                }
+
+                // Move to next turn
+                setTimeout(() => {
+                    updateHUD();
+                    if (gameState.playerHp <= 0) {
+                        endGame(false);
+                    } else {
+                        // Swap to player's attack turn
+                        gameState.activeTurn = "player";
+                        triggerNextTurn();
+                    }
+                }, 4000);
+            }
+        }
+
+        // --- TICK STATUS EFFECT ON TURN COMMENCEMENT ---
+        function applyStatusEffectsBeginTurn() {
+            let poisonDamage = 0;
+            const poisonIdx = gameState.activeStatusEffects.findIndex(s => s.type === 'poison');
+            
+            if (poisonIdx !== -1) {
+                // poison inflicts 8% of Max HP as damage
+                poisonDamage = Math.max(3, Math.floor(gameState.playerMaxHp * 0.08));
+                gameState.playerHp = Math.max(0, gameState.playerHp - poisonDamage);
+                
+                // Subtract duration
+                gameState.activeStatusEffects[poisonIdx].duration--;
+                if (gameState.activeStatusEffects[poisonIdx].duration <= 0) {
+                    gameState.activeStatusEffects.splice(poisonIdx, 1);
+                }
+                logBattle(`🧪 <span class="text-emerald-400 font-bold">สถานะพิษกำเริบ:</span> เสียชีวิตเนื่องจากพิษลด HP ลง ${poisonDamage} หน่วย!`);
+            }
+        }
+
+
+        // --- LEVEL CONCLUDING / BONUS EVENTS ---
+        function handleMonsterDefeated() {
+            logBattle(`🎉 สำเร็จ! คุณปราบ ${STAGE_MONSTERS[gameState.currentStageIdx].name} ลงได้เรียบร้อย!`);
+            
+            // Trigger Bonus Option Level Transition OR End Game
+            setTimeout(() => {
+                triggerBonusQuestionPhase();
+            }, 2200);
+        }
+
+        function triggerBonusQuestionPhase() {
+            // Initiate a transition modal with a special concept question for dynamic upgrades
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-bonus').classList.add('hidden');
+
+            // Find a bonus question
+            const bonusQ = QUESTIONS.bonus[Math.floor(Math.random() * QUESTIONS.bonus.length)];
+            
+            // temporary override screen
+            const tempBox = document.getElementById('screen-game');
+            tempBox.classList.remove('hidden');
+
+            // Change Layout to Bonus Theme
+            const turnBanner = document.getElementById('turn-banner');
+            turnBanner.innerHTML = `⭐ <span class="text-yellow-400 font-bold">การ์ดข้อสอบพิเศษ: ปรับปรุงประสิทธิภาพผู้กล้า!</span> ⭐`;
+            
+            const quizIndicator = document.getElementById('quiz-indicator');
+            quizIndicator.className = "px-2.5 py-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-xs rounded-md font-bold";
+            quizIndicator.textContent = "คำถามพิเศษ: หากตอบถูกเลือกรับของรางวัลอัปสเตตัสฟรี!";
+
+            document.getElementById('question-text').textContent = bonusQ.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            bonusQ.a.forEach((option, idx) => {
+                const label = ["ก", "ข", "ค", "ง"][idx] || "-";
+                const btn = document.createElement('button');
+                btn.className = "text-left p-4 rounded-xl border border-yellow-500/20 bg-slate-950 hover:bg-yellow-950/10 hover:border-yellow-500 text-slate-300 transition-all flex items-start gap-3 active:scale-95";
+                btn.innerHTML = `
+                    <span class="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-yellow-400 mt-0.5 border border-slate-800 flex-shrink-0">${label}</span>
+                    <span class="text-sm md:text-base">${option.text}</span>
+                `;
+                btn.onclick = () => {
+                    clearInterval(gameState.timerInterval);
+                    processBonusAnswer(option.correct, bonusQ.explanation);
+                };
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function processBonusAnswer(isCorrect, explanation) {
+            playSynthSound(isCorrect ? 'bonus' : 'hit_incorrect');
+            const alertText = isCorrect ? 
+                `🌟 <span class="text-yellow-400 font-bold">ยินดีด้วยอย่างยิ่ง!</span> คำตอบของคุณถูกต้องครบถ้วน สมควรได้รับพรอัปเกรดสถานะ!` : 
+                `🥀 <span class="text-rose-400 font-bold">น่าเสียดายยิ่งนัก!</span> ตอบข้อสอบพิเศษผิดพลาด จึงไม่ได้รับโบนัสในด่านนี้... <br><small class="text-slate-500">เกร็ดความรู้: ${explanation}</small>`;
+
+            logBattle(alertText);
+
+            setTimeout(() => {
+                if (isCorrect) {
+                    // Open upgrade screen
+                    document.getElementById('screen-game').classList.add('hidden');
+                    document.getElementById('screen-bonus').classList.remove('hidden');
+                } else {
+                    // Skip directly to next stage
+                    progressToNextStage();
+                }
+            }, 3000);
+        }
+
+        function applyBonusUpgrade(statType) {
+            playSynthSound('win');
+            if (statType === 'hp') {
+                gameState.playerMaxHp += 30;
+                gameState.playerHp = gameState.playerMaxHp; // Heal to full
+                logBattle(`❤️ อัปเกรดสำเร็จ! พลังชีวิตสูงสุดเพิ่มขึ้นเป็น ${gameState.playerMaxHp} HP และฟื้นฟูเต็มเปี่ยม!`);
+            } else if (statType === 'atk') {
+                gameState.playerAtk += 10;
+                logBattle(`🗡️ อัปเกรดสำเร็จ! พลังโจมตีพื้นฐานเพิ่มขึ้นเป็น ${gameState.playerAtk} ATK!`);
+            } else if (statType === 'def') {
+                gameState.playerDef += 6;
+                logBattle(`🛡️ อัปเกรดสำเร็จ! พลังป้องกันพื้นฐานเพิ่มขึ้นเป็น ${gameState.playerDef} DEF!`);
+            }
+
+            // Return to game board in next stage
+            setTimeout(() => {
+                document.getElementById('screen-bonus').classList.add('hidden');
+                progressToNextStage();
+            }, 2000);
+        }
+
+        function progressToNextStage() {
+            gameState.currentStageIdx++;
+            if (gameState.currentStageIdx >= STAGE_MONSTERS.length) {
+                // Game Beat!
+                endGame(true);
+            } else {
+                // Next Stage setup
+                document.getElementById('screen-game').classList.remove('hidden');
+                setupStage();
+            }
+        }
+
+        // --- END GAME (VICTORY / DEFEAT) ---
+        function endGame(isVictory) {
+            clearInterval(gameState.timerInterval);
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-bonus').classList.add('hidden');
+            document.getElementById('screen-gameover').classList.remove('hidden');
+
+            const visual = document.getElementById('gameover-visual');
+            const title = document.getElementById('gameover-title');
+            const subtitle = document.getElementById('gameover-subtitle');
+
+            const scorePercent = gameState.totalAnswered > 0 ? (gameState.correctCount / gameState.totalAnswered) * 100 : 0;
+            let rank = "ผู้เริ่มต้นเรียนรู้";
+            if (scorePercent >= 85) rank = "🏆 ปรมาจารย์แนวคิดเชิงคำนวณ (ทองเกียรติยศ)";
+            else if (scorePercent >= 70) rank = "🥇 ผู้กล้าเหรียญทอง";
+            else if (scorePercent >= 50) rank = "🥈 นักเดินทางฝึกหัด (เหรียญเงิน)";
+            else rank = "🥉 ผู้รอดชีวิต (เหรียญทองแดง)";
+
+            if (isVictory) {
+                playSynthSound('win');
+                visual.textContent = "🏆";
+                title.textContent = "ฉลองชัยชนะสงคราม!";
+                subtitle.textContent = "คุณใช้ปัญญาเชิงคำนวณเอาชนะมอนสเตอร์ได้ทุกด่าน!";
+            } else {
+                playSynthSound('gameover');
+                visual.textContent = "💀";
+                title.textContent = "พ่ายแพ้การทดสอบ!";
+                subtitle.textContent = "พลังชีวิตของคุณหมดลงเสียก่อน กลับไปทบทวนความรู้และสู้ใหม่อีกครั้ง!";
+            }
+
+            // Scorecard Summary
+            document.getElementById('summary-player-name').textContent = gameState.playerName;
+            document.getElementById('summary-player-class').textContent = HERO_TEMPLATES[gameState.heroClass].name;
+            document.getElementById('summary-correct-answers').textContent = `${gameState.correctCount} / ${gameState.totalAnswered} ข้อ`;
+            document.getElementById('summary-rank').textContent = rank;
+        }
+
+    </script>
+</body>
+</html>
