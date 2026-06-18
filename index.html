@@ -1168,7 +1168,9 @@
             totalAnswered: 0,
             activeStatusEffects: [], // e.g. { type: 'poison', duration: 2 }
             usedQuestions: [], // Tracking to avoid duplicates
-            bonusStepPending: false
+            bonusStepPending: false,
+            bonusAnswered: false,
+            upgradeChosen: false
         };
 
         // Initialize Selection
@@ -1610,6 +1612,9 @@
         }
 
         function triggerBonusQuestionPhase() {
+            gameState.bonusAnswered = false;
+            gameState.upgradeChosen = false;
+
             // Initiate a transition modal with a special concept question for dynamic upgrades
             document.getElementById('screen-game').classList.add('hidden');
             document.getElementById('screen-bonus').classList.add('hidden');
@@ -1653,6 +1658,16 @@
         }
 
         function processBonusAnswer(isCorrect, explanation) {
+            if (gameState.bonusAnswered) return;
+            gameState.bonusAnswered = true;
+
+            // Disable all option buttons immediately
+            const buttons = document.getElementById('options-container').getElementsByTagName('button');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = true;
+                buttons[i].classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
             playSynthSound(isCorrect ? 'bonus' : 'hit_incorrect');
             const alertText = isCorrect ? 
                 `🌟 <span class="text-yellow-400 font-bold">ยินดีด้วยอย่างยิ่ง!</span> คำตอบของคุณถูกต้องครบถ้วน สมควรได้รับพรอัปเกรดสถานะ!` : 
@@ -1673,6 +1688,9 @@
         }
 
         function applyBonusUpgrade(statType) {
+            if (gameState.upgradeChosen) return;
+            gameState.upgradeChosen = true;
+
             playSynthSound('win');
             if (statType === 'hp') {
                 gameState.playerMaxHp += 30;
